@@ -31,11 +31,12 @@ class Project(models.Model):
     def __str__(self):
         return self.title
 
-class ProjectSkills(models.Model):
-    project=models.ForeignKey(Project,on_delete=models.CASCADE,related_name='required_skills')
-
-    # Update 'skills.Skill' if Member 1 named their skill app/model differently
-    skill = models.ForeignKey('skills.Skill', on_delete=models.CASCADE)
+class ProjectSkill(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='required_skills')
+    skill_name = models.CharField(max_length=100)  # Stores skill name directly (e.g., "Python", "Django")
 
     class Meta:
-        unique_together = ('project', 'skill')
+        unique_together = ('project', 'skill_name')
+
+    def __str__(self):
+        return f"{self.skill_name} for {self.project.title}"

@@ -34,7 +34,7 @@ def task_list_create(request):
         if serializer.is_valid():
             task = serializer.save(created_by=request.user)
 
-            # 🔥 TRIGGER NOTIFICATION IF ASSIGNED TO SOMEONE ELSE 🔥
+            #TRIGGER NOTIFICATION IF ASSIGNED TO SOMEONE ELSE
             if task.assigned_to and task.assigned_to != request.user:
                 from notifications.models import Notification
                 Notification.objects.create(
@@ -67,7 +67,7 @@ def task_detail(request, pk):
         if serializer.is_valid():
             updated_task = serializer.save()
 
-            # 🔥 TRIGGER NOTIFICATION IF ASSIGNEE CHANGED 🔥
+            # TRIGGER NOTIFICATION IF ASSIGNEE CHANGED 
             if updated_task.assigned_to and updated_task.assigned_to != old_assignee and updated_task.assigned_to != request.user:
                 from notifications.models import Notification
                 Notification.objects.create(

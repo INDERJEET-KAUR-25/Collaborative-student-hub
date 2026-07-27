@@ -11,10 +11,10 @@ from .serializers import NotificationSerializer
 @api_view(['GET', 'PUT'])
 @permission_classes([IsAuthenticated])
 def user_notifications(request):
-    """
-    GET: List all notifications for the authenticated user.
-    PUT: Mark all or a specific notification as read.
-    """
+    
+    #GET: List all notifications for the authenticated user.
+    #PUT: Mark all or a specific notification as read.
+    
     if request.method == 'GET':
         notifications = Notification.objects.filter(recipient=request.user).order_by('-created_at')
         serializer = NotificationSerializer(notifications, many=True)

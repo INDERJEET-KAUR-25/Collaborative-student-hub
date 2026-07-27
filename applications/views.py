@@ -75,7 +75,7 @@ def application_detail_update(request, pk):
             updated_app = serializer.save()
             new_status = updated_app.status
 
-            # 🔥 AUTOMATIC TEAM CREATION TRIGGER 🔥
+            #  AUTOMATIC TEAM CREATION TRIGGER 
             if old_status != 'Accepted' and new_status == 'Accepted':
                 # Get or create the project team
                 team, created = Team.objects.get_or_create(

@@ -32,13 +32,13 @@ def task_list_create(request):
     elif request.method == 'POST':
         serializer = TaskSerializer(data=request.data)
         if serializer.is_valid():
-            task = serializer.save(created_by=request.user)
+            task = serializer.save()
 
             #TRIGGER NOTIFICATION IF ASSIGNED TO SOMEONE ELSE
             if task.assigned_to and task.assigned_to != request.user:
                 from notifications.models import Notification
                 Notification.objects.create(
-                    recipient=task.assigned_to,
+                    user=task.assigned_to,
                     message=f"You have been assigned a new task: '{task.title}'"
                 )
 
@@ -71,7 +71,7 @@ def task_detail(request, pk):
             if updated_task.assigned_to and updated_task.assigned_to != old_assignee and updated_task.assigned_to != request.user:
                 from notifications.models import Notification
                 Notification.objects.create(
-                    recipient=updated_task.assigned_to,
+                    user=updated_task.assigned_to,
                     message=f"You have been assigned to the task: '{updated_task.title}'"
                 )
 

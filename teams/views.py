@@ -25,7 +25,7 @@ def my_teams(request):
     
     #GET: List all teams the current logged-in user belongs to.
     
-    teams = Team.objects.filter(teammember__user=request.user).distinct()
+    teams = Team.objects.filter(teammember__student=request.user).distinct()
     serializer = TeamSerializer(teams, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 

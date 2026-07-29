@@ -2,17 +2,17 @@ from rest_framework import serializers
 from .models import Team, TeamMember
 
 class TeamMemberSerializer(serializers.ModelSerializer):
-    username = serializers.ReadOnlyField(source='user.username')
-    email = serializers.ReadOnlyField(source='user.email')
+    username = serializers.ReadOnlyField(source='student.username')
+    email = serializers.ReadOnlyField(source='student.email')
 
     class Meta:
         model = TeamMember
-        fields = ['id', 'user', 'username', 'email', 'joined_at']
+        fields = ['id', 'student', 'username', 'email', 'role']
 
 
 class TeamSerializer(serializers.ModelSerializer):
     project_title = serializers.ReadOnlyField(source='project.title')
-    members = TeamMemberSerializer(source='teammember_set', many=True, read_only=True)
+    members = TeamMemberSerializer(source='members', many=True, read_only=True)
 
     class Meta:
         model = Team

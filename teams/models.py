@@ -3,11 +3,12 @@ from django.conf import settings
 from projects.models import Project
 
 class Team(models.Model):
+    name = models.CharField(max_length=255, blank=True)
     project = models.OneToOneField(Project, on_delete=models.CASCADE, related_name='team')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Team for {self.project.title}"
+        return self.name or f"Team for {self.project.title}"
 
 class TeamMember(models.Model):
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='members')

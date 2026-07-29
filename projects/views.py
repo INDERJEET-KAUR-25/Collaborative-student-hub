@@ -28,9 +28,11 @@ def project_list_create(request):
         if difficulty:
             projects=projects.filter(difficulty__iexact=difficulty)
         if search:
-            projects=projects.filter(Q(title__icontains=search)|
-                                     Q(description__icontains=search)|
-            Q(required_skilss__skill_name__icontains=search)).distinct()
+            projects = projects.filter(
+                Q(title__icontains=search) |
+                Q(description__icontains=search) |
+                Q(required_skills__skill_name__icontains=search)
+            ).distinct()
 
         serializer=ProjectSerializer(projects,many=True)
         return Response(serializer.data,status=status.HTTP_200_OK)

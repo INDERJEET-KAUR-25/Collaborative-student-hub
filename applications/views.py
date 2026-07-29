@@ -24,7 +24,7 @@ def application_list_create(request):
             applications = Application.objects.filter(project_id=project_id)
         else:
             # Applications submitted by the current user
-            applications = Application.objects.filter(applicant=request.user)
+            applications = Application.objects.filter(student=request.user)
             
         serializer = ApplicationSerializer(applications, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -34,13 +34,13 @@ def application_list_create(request):
         if serializer.is_valid():
             # Prevent applying twice to the same project
             project = serializer.validated_data['project']
-            if Application.objects.filter(project=project, applicant=request.user).exists():
+            if Application.objects.filter(project=project, student=request.user).exists():
                 return Response(
                     {'detail': 'You have already applied to this project.'}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
                 
-            serializer.save(applicant=request.user)
+            serializer.save(student=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -57,7 +57,7 @@ def application_detail_update(request, pk):
 
     if request.method == 'GET':
         # Only applicant or project owner can view
-        if request.user != application.applicant and request.user != application.project.owner:
+        if request.user != application.student and request.user != application.project.owner:
             return Response({'detail': 'Not authorized.'}, status=status.HTTP_403_FORBIDDEN)
             
         serializer = ApplicationSerializer(application)
@@ -82,10 +82,10 @@ def application_detail_update(request, pk):
                     project=updated_app.project,
                     defaults={'name': f"Team {updated_app.project.title}"}
                 )
-                # Add accepted applicant to the team
+                # Add accepted student to the team
                 TeamMember.objects.get_or_create(
                     team=team,
-                    user=updated_app.applicant
+                    student=updated_app.student
                 )
 
             return Response(serializer.data, status=status.HTTP_200_OK)

@@ -2,13 +2,14 @@ from rest_framework import serializers
 from .models import Application
 
 class ApplicationSerializer(serializers.ModelSerializer):
-    applicant_name=serializers.ReadOnlyField(source='applicant.username')
-    project_title=serializers.ReadOnlyField(source='project.title')
+    student_name = serializers.ReadOnlyField(source='student.username')
+    project_title = serializers.ReadOnlyField(source='project.title')
+    cover_letter = serializers.CharField(source='message', allow_blank=True, required=False)
 
     class Meta:
-        model=Application
-        fields=[
-            'id', 'project', 'project_title', 'applicant', 
-            'applicant_name', 'cover_letter', 'status', 'created_at'
+        model = Application
+        fields = [
+            'id', 'project', 'project_title', 'student',
+            'student_name', 'cover_letter', 'status', 'created_at'
         ]
-        read_only_fields = ['applicant', 'created_at']
+        read_only_fields = ['student', 'created_at']

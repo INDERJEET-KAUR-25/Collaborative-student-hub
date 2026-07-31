@@ -156,6 +156,7 @@ const Workspace = () => {
       if (res.status === 201) {
         setTasks(prev => [res.data, ...prev]);
         setIsModalOpen(false);
+        document.body.classList.remove('modal-open');
         setNewTask({ title: '', description: '', assigneeId: '', deadline: '' });
         fetchNotifications();
       }
@@ -357,7 +358,7 @@ const Workspace = () => {
               )}
               {/* Show Add Task ONLY if logged in user is the Project Owner */}
               {isOwnerOfActive && (
-                <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
+                <button className="btn btn-primary" onClick={() => { setIsModalOpen(true); document.body.classList.add('modal-open'); }}>
                   <Plus size={18} /> Add Task
                 </button>
               )}
@@ -481,7 +482,7 @@ const Workspace = () => {
       {isModalOpen && activeTeam && (
         <div className="modal-overlay">
           <div className="modal-content-modern" style={{ maxWidth: '450px' }}>
-            <button className="close-btn" onClick={() => setIsModalOpen(false)}>
+            <button className="close-btn" onClick={() => { setIsModalOpen(false); document.body.classList.remove('modal-open'); }}>
               <X size={20} />
             </button>
             <h2 style={{ marginBottom: '1.5rem', fontWeight: 700 }}>Add Sprint Task</h2>
@@ -536,7 +537,7 @@ const Workspace = () => {
               </div>
               
               <div className="modal-footer flex-end" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
-                <button type="button" className="btn btn-dark-gray" onClick={() => setIsModalOpen(false)}>Cancel</button>
+                <button type="button" className="btn btn-dark-gray" onClick={() => { setIsModalOpen(false); document.body.classList.remove('modal-open'); }}>Cancel</button>
                 <button type="submit" className="btn btn-primary">Create Task</button>
               </div>
             </form>

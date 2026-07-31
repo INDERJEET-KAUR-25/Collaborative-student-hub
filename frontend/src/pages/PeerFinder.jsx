@@ -10,6 +10,17 @@ const PeerFinder = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDept, setFilterDept] = useState('');
+  const [currentUserProfile, setCurrentUserProfile] = useState(null);
+
+  const fetchCurrentUserProfile = async () => {
+    try {
+      const res = await api.get('/auth/profile/');
+      setCurrentUserProfile(res.data);
+    } catch (e) {
+      // Unauthenticated views should handle silently
+      console.error('Error fetching current user profile:', e);
+    }
+  };
 
   const fetchStudents = async () => {
     try {
@@ -23,6 +34,10 @@ const PeerFinder = () => {
       console.error('Error fetching students:', err);
     }
   };
+
+  useEffect(() => {
+    fetchCurrentUserProfile();
+  }, []);
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
@@ -74,6 +89,26 @@ const PeerFinder = () => {
             const initials = student.user 
               ? (student.user.first_name ? student.user.first_name.charAt(0) : student.user.username.charAt(0)).toUpperCase()
               : 'U';
+
+            // Calculate common stack crossover
+            const parseInterests = (instr) => {
+              if (!instr) return [];
+              return instr.split(',').map(item => item.trim().toLowerCase()).filter(Boolean);
+            };
+            const isSelf = currentUserProfile && currentUserProfile.user?.id === student.user?.id;
+            const myInterestsSet = new Set(parseInterests(currentUserProfile?.interests));
+            const peerInterestsList = parseInterests(student.interests);
+            const matchingInterests = peerInterestsList.filter(interest => myInterestsSet.has(interest));
+
+            const mySkillsSet = new Set((currentUserProfile?.skills || []).map(s => s.trim().toLowerCase()));
+            const peerSkillsList = (student.skills || []).map(s => s.trim().toLowerCase());
+            const matchingSkills = peerSkillsList.filter(skill => mySkillsSet.has(skill));
+
+            const commonList = [...new Set([...matchingInterests, ...matchingSkills])];
+            const hasCommon = !isSelf && commonList.length > 0;
+            const displayCommon = commonList.map(word => 
+              word.split(' ').map(w => w.charAt(0).toUpperCase() + w.substring(1)).join(' ')
+            );
             
             return (
               <SpotlightCard 
@@ -106,6 +141,25 @@ const PeerFinder = () => {
                     {student.skills.map(skill => (
                       <span key={skill} className="tag tag-primary" style={{ margin: 0 }}>{skill}</span>
                     ))}
+                  </div>
+                )}
+
+                {hasCommon && (
+                  <div className="animate-fade-in" style={{
+                    marginTop: '0.75rem',
+                    fontSize: '0.75rem',
+                    background: 'rgba(105, 108, 255, 0.08)',
+                    color: 'var(--accent-primary)',
+                    border: '1px solid rgba(105, 108, 255, 0.15)',
+                    padding: '0.25rem 0.6rem',
+                    borderRadius: '6px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.25rem',
+                    fontWeight: 600
+                  }}>
+                    🤝 Common Stack: {displayCommon.slice(0, 3).join(', ')}
                   </div>
                 )}
 

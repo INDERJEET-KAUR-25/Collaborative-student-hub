@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404
 from .models import Application
 from .serializers import ApplicationSerializer
 from teams.models import Team, TeamMember
+from projects.models import Project
 
 # Create your views here.
 
@@ -21,7 +22,13 @@ def application_list_create(request):
         project_id = request.query_params.get('project')
         if project_id:
             # Applications for a specific project (owner view)
-            applications = Application.objects.filter(project_id=project_id)
+            project = get_object_or_404(Project, pk=project_id)
+            if request.user != project.owner:
+                return Response(
+                    {'detail': 'Only the project owner can view incoming applications.'},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            applications = Application.objects.filter(project=project)
         else:
             # Applications submitted by the current user
             applications = Application.objects.filter(student=request.user)

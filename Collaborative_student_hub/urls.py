@@ -15,14 +15,21 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path,include
+from django.http import HttpResponse
+from django.urls import path, include
+
+
+def home(request):
+    return HttpResponse("<h1>Collaborative Student Hub</h1><p>The frontend is being served separately. Open the Vite app at http://localhost:5173/</p>")
+
 
 urlpatterns = [
+    path('', home, name='home'),
     path('admin/', admin.site.urls),
     path('api/projects/', include('projects.urls')),
-    path('api/applications/',include('applications.urls')),
-    path('api/tasks/',include('tasks.urls')),
-    path('api/notifications/',include('notifications.urls')),
+    path('api/applications/', include('applications.urls')),
+    path('api/tasks/', include('tasks.urls')),
+    path('api/notifications/', include('notifications.urls')),
     path('api/auth/', include('accounts.urls')),
-    path('api/teams/',include('teams.urls')),
+    path('api/teams/', include('teams.urls')),
 ]

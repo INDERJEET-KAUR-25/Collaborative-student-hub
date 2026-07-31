@@ -43,17 +43,26 @@ export const AuthProvider = ({ children }) => {
       if (res.status === 200) {
         localStorage.setItem('access_token', res.data.access);
         localStorage.setItem('refresh_token', res.data.refresh);
-        // Load the profile details using the newly acquired token
         const profileRes = await api.get('/auth/profile/');
         setUser(profileRes.data);
         return { success: true };
       }
+      return { success: false, error: 'Unexpected response from the server.' };
     } catch (err) {
       console.error('Login error:', err);
       setUser(null);
-      return { 
-        success: false, 
-        error: err.response?.data?.detail || 'Invalid username or password.' 
+
+      if (err.response?.status === 401 || err.response?.status === 400) {
+        const detail = err.response?.data?.detail || err.response?.data?.non_field_errors?.[0];
+        return {
+          success: false,
+          error: detail || 'Invalid username or password.'
+        };
+      }
+
+      return {
+        success: false,
+        error: 'Unable to reach the server. Please try again.'
       };
     } finally {
       setLoading(false);

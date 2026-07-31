@@ -36,6 +36,7 @@ const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState({ status: 'All', difficulty: 'All', department: 'All' });
   const [showFilters, setShowFilters] = useState(false);
+  const [matchOnly, setMatchOnly] = useState(false);
 
   // Apply Modal state
   const [selectedProject, setSelectedProject] = useState(null);
@@ -48,6 +49,7 @@ const Dashboard = () => {
   const [showManageModal, setShowManageModal] = useState(false);
   const [incomingApps, setIncomingApps] = useState([]);
   const [appsLoading, setAppsLoading] = useState(false);
+  const [appsError, setAppsError] = useState('');
 
   const fetchDashboardData = async () => {
     try {
@@ -148,6 +150,8 @@ const Dashboard = () => {
     setSelectedProject(project);
     setShowManageModal(true);
     setAppsLoading(true);
+    setAppsError('');
+    setIncomingApps([]);
     try {
       const res = await api.get('/applications/applications/', {
         params: { project: project.id }
@@ -155,6 +159,7 @@ const Dashboard = () => {
       setIncomingApps(res.data);
     } catch (err) {
       console.error('Error fetching incoming applications:', err);
+      setAppsError(err.response?.data?.detail || 'Could not load incoming applications. Please try again.');
     } finally {
       setAppsLoading(false);
     }
@@ -164,6 +169,7 @@ const Dashboard = () => {
     setShowManageModal(false);
     setSelectedProject(null);
     setIncomingApps([]);
+    setAppsError('');
   };
 
   const handleUpdateAppStatus = async (appId, status) => {
@@ -348,6 +354,21 @@ const Dashboard = () => {
               <option value="Design">Design</option>
             </select>
           </div>
+
+          {user && (
+            <div className="input-group" style={{ margin: 0, flex: 1, minWidth: '180px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <label style={{ fontSize: '0.8rem' }}>Preferences</label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', cursor: 'pointer', color: 'var(--text-primary)', height: '100%' }}>
+                <input 
+                  type="checkbox" 
+                  checked={matchOnly} 
+                  onChange={(e) => setMatchOnly(e.target.checked)} 
+                  style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+                />
+                <span>Match My Stack</span>
+              </label>
+            </div>
+          )}
         </div>
       )}
 
@@ -363,111 +384,188 @@ const Dashboard = () => {
             </div>
           ) : (
             <>
-              {projects.map((project, index) => {
-                const hasApplied = appliedProjectIds.includes(project.id);
-                const isOwner = user && project.owner === user.user?.id;
-                
-                // Compare skills for compulsory tech stack check (OR condition: user needs at least one matching skill)
-                const userSkillsLower = (mySkills || []).map(s => s.toLowerCase().trim());
-                const projectSkillsLower = (project.skills || []).map(s => s.toLowerCase().trim());
-                const hasAtLeastOne = project.skills.length === 0 || projectSkillsLower.some(s => userSkillsLower.includes(s));
-                const isMissingSkills = !isOwner && !hasAtLeastOne;
+              {(() => {
+                const filteredProjects = projects.filter(project => {
+                  if (!matchOnly) return true;
+                  const currentUserId = user?.user?.id ?? user?.id;
+                  const isOwner = currentUserId != null && project.owner == currentUserId;
+                  if (isOwner) return true;
+                  if (!project.skills || project.skills.length === 0) return true;
+                  const userSkillsLower = (mySkills || []).map(s => s.toLowerCase().trim());
+                  const projectSkillsLower = (project.skills || []).map(s => s.toLowerCase().trim());
+                  return projectSkillsLower.some(s => userSkillsLower.includes(s));
+                });
 
-                const isFull = project.current_member_count >= project.team_size;
-
-                return (
-                  <SpotlightCard 
-                    key={project.id} 
-                    className="project-card-modern animate-fade-in" 
-                    style={{ 
-                      animationDelay: `${index * 0.05}s`,
-                      ...(isFull && !isOwner ? { opacity: 0.55, filter: 'grayscale(0.3)' } : {})
-                    }}
-                  >
-                    <div className="project-card-header">
-                      <h3>{project.title}</h3>
-                      <span className={`status-badge-os ${project.status.toLowerCase().replace(' ', '-')}`}>
-                        <span className="dot"></span> {project.status}
-                      </span>
+                if (filteredProjects.length === 0) {
+                  return (
+                    <div className="no-results flex-center" style={{ height: '200px', flexDirection: 'column', gap: '0.5rem' }}>
+                      <AlertCircle size={32} className="text-muted" />
+                      <p className="text-muted">No projects found matching the criteria.</p>
                     </div>
-                    
-                    <p className="project-desc">{project.description}</p>
-                    
-                    {project.skills && project.skills.length > 0 && (
-                      <div className="tech-stack">
-                        {project.skills.map(tech => (
-                          <span key={tech} className="tech-badge">{tech}</span>
-                        ))}
-                      </div>
-                    )}
+                  );
+                }
 
-                    {/* Member Count Badge */}
-                    <div style={{ 
-                      display: 'flex', alignItems: 'center', gap: '0.5rem', 
-                      marginTop: '0.5rem', fontSize: '0.8rem', color: isFull ? '#ef4444' : 'var(--text-muted)' 
-                    }}>
-                      <span style={{ 
-                        display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
-                        background: isFull ? 'rgba(239, 68, 68, 0.08)' : 'rgba(99, 102, 241, 0.08)', 
-                        padding: '0.2rem 0.6rem', borderRadius: '20px', fontWeight: 600,
-                        border: `1px solid ${isFull ? 'rgba(239, 68, 68, 0.15)' : 'rgba(99, 102, 241, 0.15)'}`
-                      }}>
-                        👥 {project.current_member_count}/{project.team_size} members
-                      </span>
-                      {isFull && <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#ef4444' }}>Team Full</span>}
-                    </div>
+                return filteredProjects.map((project, index) => {
+                  const hasApplied = appliedProjectIds.includes(project.id);
+                  // Use == (loose equality) to handle possible number/string type mismatch from API responses
+                  const currentUserId = user?.user?.id ?? user?.id;
+                  const isOwner = currentUserId != null && project.owner == currentUserId;
+                  
+                  // Compare skills for compulsory tech stack check (OR condition: user needs at least one matching skill)
+                  const userSkillsLower = (mySkills || []).map(s => s.toLowerCase().trim());
+                  const projectSkillsLower = (project.skills || []).map(s => s.toLowerCase().trim());
+                  const hasAtLeastOne = project.skills.length === 0 || projectSkillsLower.some(s => userSkillsLower.includes(s));
+                  const isMissingSkills = !isOwner && !hasAtLeastOne;
 
-                    {/* Compulsory Skills Warning Badge */}
-                    {isMissingSkills && (
-                      <div className="missing-skills-warning animate-fade-in" style={{ fontSize: '0.75rem', color: '#ff3e1d', marginTop: '0.5rem', background: 'rgba(255, 62, 29, 0.05)', padding: '0.35rem 0.6rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255, 62, 29, 0.1)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                        <span>⚠️ Requires at least one skill: {project.skills.join(', ')}</span>
-                      </div>
-                    )}
+                  const isFull = project.current_member_count >= project.team_size;
 
-                    <div className="project-card-footer">
-                      <div className="owner-info">
-                        <div className="avatar-os">{project.owner_name ? project.owner_name.charAt(0).toUpperCase() : 'U'}</div>
-                        <Link to={`/profile?id=${project.owner}`} style={{ color: 'inherit', textDecoration: 'none', fontWeight: 600 }}>
-                          {project.owner_name || 'User'}
-                        </Link>
-                        {isOwner && <span style={{ fontSize: '0.75rem', background: 'var(--accent-glow)', color: 'var(--accent-primary)', padding: '0.1rem 0.4rem', borderRadius: '4px', marginLeft: '0.4rem' }}>Owner</span>}
+                  // Skill match score
+                  const totalSkillsCount = project.skills ? project.skills.length : 0;
+                  const matchedSkillsCount = project.skills ? project.skills.filter(s => userSkillsLower.includes(s.toLowerCase().trim())).length : 0;
+                  const matchPercentage = totalSkillsCount > 0 ? Math.round((matchedSkillsCount / totalSkillsCount) * 100) : 100;
+
+                  // Project Deadline countdown calculation
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  const deadlineDate = new Date(project.deadline);
+                  deadlineDate.setHours(0, 0, 0, 0);
+                  const diffTime = deadlineDate - today;
+                  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                  const isWithinWeek = diffDays >= 0 && diffDays <= 7;
+
+                  return (
+                    <SpotlightCard 
+                      key={project.id} 
+                      className="project-card-modern animate-fade-in" 
+                      style={{ 
+                        animationDelay: `${index * 0.05}s`,
+                        ...(isFull && !isOwner ? { opacity: 0.55, filter: 'grayscale(0.3)' } : {})
+                      }}
+                    >
+                      <div className="project-card-header">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                          <h3>{project.title}</h3>
+                          <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '0.2rem' }}>
+                            {/* Match Percentage Badge */}
+                            {user && !isOwner && project.skills.length > 0 && (
+                              <span style={{ 
+                                fontSize: '0.7rem', 
+                                background: matchPercentage > 0 ? 'rgba(105, 108, 255, 0.08)' : 'rgba(255, 62, 29, 0.08)', 
+                                color: matchPercentage > 0 ? 'var(--accent-primary)' : '#ff3e1d',
+                                border: `1px solid ${matchPercentage > 0 ? 'rgba(105, 108, 255, 0.15)' : 'rgba(255, 62, 29, 0.15)'}`,
+                                padding: '0.1rem 0.5rem', 
+                                borderRadius: '20px',
+                                fontWeight: 600
+                              }}>
+                                🎯 {matchPercentage}% Match
+                              </span>
+                            )}
+                            {/* Applicant Density Badge */}
+                            {project.applications_count !== undefined && (
+                              <span style={{ 
+                                fontSize: '0.7rem', 
+                                background: project.applications_count >= 3 ? 'rgba(255, 171, 0, 0.08)' : 'rgba(113, 221, 55, 0.08)', 
+                                color: project.applications_count >= 3 ? '#ffab00' : '#71dd37',
+                                border: `1px solid ${project.applications_count >= 3 ? 'rgba(255, 171, 0, 0.15)' : 'rgba(113, 221, 55, 0.15)'}`,
+                                padding: '0.1rem 0.5rem', 
+                                borderRadius: '20px',
+                                fontWeight: 600
+                              }}>
+                                {project.applications_count >= 3 ? `🔥 High Interest (${project.applications_count} apps)` : `🌱 Opportunity (${project.applications_count} app${project.applications_count === 1 ? '' : 's'})`}
+                              </span>
+                            )}
+                            {/* Deadline Countdown Badge */}
+                            {project.status === 'Open' && isWithinWeek && (
+                              <span style={{ 
+                                fontSize: '0.7rem', 
+                                background: diffDays <= 2 ? 'rgba(239, 68, 68, 0.08)' : 'rgba(255, 171, 0, 0.08)', 
+                                color: diffDays <= 2 ? '#ef4444' : '#ffab00',
+                                border: `1px solid ${diffDays <= 2 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255, 171, 0, 0.15)'}`,
+                                padding: '0.1rem 0.5rem', 
+                                borderRadius: '20px',
+                                fontWeight: 600
+                              }}>
+                                ⏳ {diffDays === 0 ? 'Closes Today' : diffDays === 1 ? 'Closes Tomorrow' : `Closes in ${diffDays} days`}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <span className={`status-badge-os ${project.status.toLowerCase().replace(' ', '-')}`}>
+                          <span className="dot"></span> {project.status}
+                        </span>
                       </div>
                       
-                      <div className="flex-center" style={{ gap: '0.5rem' }}>
-                        {isOwner ? (
-                          <button className="btn btn-primary" style={{ padding: '0.45rem 0.9rem', fontSize: '0.85rem' }} onClick={() => handleOpenManageModal(project)}>Manage Apps</button>
-                        ) : hasApplied ? (
-                          <button className="btn btn-full" style={{ padding: '0.45rem 0.9rem', fontSize: '0.85rem', opacity: 0.6, cursor: 'not-allowed' }} disabled>Applied</button>
-                        ) : isFull ? (
-                          <button className="btn btn-full" style={{ padding: '0.45rem 0.9rem', fontSize: '0.85rem', opacity: 0.6, cursor: 'not-allowed', borderColor: 'rgba(239, 68, 68, 0.2)', color: '#ef4444' }} disabled>Capacity Full</button>
-                        ) : project.status === 'Open' ? (
-                          isMissingSkills ? (
-                            <button 
-                              className="btn btn-full" 
-                              style={{ padding: '0.45rem 0.9rem', fontSize: '0.85rem', opacity: 0.5, cursor: 'not-allowed', color: '#ff3e1d', borderColor: 'rgba(255, 62, 29, 0.2)' }} 
-                              title="You do not meet the required skills stack" 
-                              disabled
-                            >
-                              Stack Unmet
-                            </button>
-                          ) : (
-                            <button className="btn btn-electric-blue" style={{ padding: '0.45rem 0.9rem', fontSize: '0.85rem' }} onClick={() => handleOpenApplyModal(project)}>Apply</button>
-                          )
-                        ) : (
-                          <button className="btn btn-outline-blue" style={{ padding: '0.45rem 0.9rem', fontSize: '0.85rem' }} disabled>Closed</button>
-                        )}
-                      </div>
-                    </div>
-                  </SpotlightCard>
-                );
-              })}
+                      <p className="project-desc">{project.description}</p>
+                      
+                      {project.skills && project.skills.length > 0 && (
+                        <div className="tech-stack">
+                          {project.skills.map(tech => (
+                            <span key={tech} className="tech-badge">{tech}</span>
+                          ))}
+                        </div>
+                      )}
 
-              {projects.length === 0 && (
-                <div className="no-results flex-center" style={{ height: '200px', flexDirection: 'column', gap: '0.5rem' }}>
-                  <AlertCircle size={32} className="text-muted" />
-                  <p className="text-muted">No projects found matching the criteria.</p>
-                </div>
-              )}
+                      {/* Member Count Badge */}
+                      <div style={{ 
+                        display: 'flex', alignItems: 'center', gap: '0.5rem', 
+                        marginTop: '0.5rem', fontSize: '0.8rem', color: isFull ? '#ef4444' : 'var(--text-muted)' 
+                      }}>
+                        <span style={{ 
+                          display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+                          background: isFull ? 'rgba(239, 68, 68, 0.08)' : 'rgba(99, 102, 241, 0.08)', 
+                          padding: '0.2rem 0.6rem', borderRadius: '20px', fontWeight: 600,
+                          border: `1px solid ${isFull ? 'rgba(239, 68, 68, 0.15)' : 'rgba(99, 102, 241, 0.15)'}`
+                        }}>
+                          👥 {project.current_member_count}/{project.team_size} members
+                        </span>
+                        {isFull && <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#ef4444' }}>Team Full</span>}
+                      </div>
+
+                      {/* Compulsory Skills Warning Badge */}
+                      {isMissingSkills && (
+                        <div className="missing-skills-warning animate-fade-in" style={{ fontSize: '0.75rem', color: '#ff3e1d', marginTop: '0.5rem', background: 'rgba(255, 62, 29, 0.05)', padding: '0.35rem 0.6rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255, 62, 29, 0.1)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                          <span>⚠️ Requires at least one skill: {project.skills.join(', ')}</span>
+                        </div>
+                      )}
+
+                      <div className="project-card-footer">
+                        <div className="owner-info">
+                          <div className="avatar-os">{project.owner_name ? project.owner_name.charAt(0).toUpperCase() : 'U'}</div>
+                          <Link to={`/profile?id=${project.owner}`} style={{ color: 'inherit', textDecoration: 'none', fontWeight: 600 }}>
+                            {project.owner_name || 'User'}
+                          </Link>
+                          {isOwner && <span style={{ fontSize: '0.75rem', background: 'var(--accent-glow)', color: 'var(--accent-primary)', padding: '0.1rem 0.4rem', borderRadius: '4px', marginLeft: '0.4rem' }}>Owner</span>}
+                        </div>
+                        
+                        <div className="flex-center" style={{ gap: '0.5rem' }}>
+                          {isOwner ? (
+                            <button className="btn btn-primary" style={{ padding: '0.45rem 0.9rem', fontSize: '0.85rem' }} onClick={() => handleOpenManageModal(project)}>Manage Apps</button>
+                          ) : hasApplied ? (
+                            <button className="btn btn-full" style={{ padding: '0.45rem 0.9rem', fontSize: '0.85rem', opacity: 0.6, cursor: 'not-allowed' }} disabled>Applied</button>
+                          ) : isFull ? (
+                            <button className="btn btn-full" style={{ padding: '0.45rem 0.9rem', fontSize: '0.85rem', opacity: 0.6, cursor: 'not-allowed', borderColor: 'rgba(239, 68, 68, 0.2)', color: '#ef4444' }} disabled>Capacity Full</button>
+                          ) : project.status === 'Open' ? (
+                            isMissingSkills ? (
+                              <button 
+                                className="btn btn-full" 
+                                style={{ padding: '0.45rem 0.9rem', fontSize: '0.85rem', opacity: 0.5, cursor: 'not-allowed', color: '#ff3e1d', borderColor: 'rgba(255, 62, 29, 0.2)' }} 
+                                title="You do not meet the required skills stack" 
+                                disabled
+                              >
+                                Stack Unmet
+                              </button>
+                            ) : (
+                              <button className="btn btn-electric-blue" style={{ padding: '0.45rem 0.9rem', fontSize: '0.85rem' }} onClick={() => handleOpenApplyModal(project)}>Apply</button>
+                            )
+                          ) : (
+                            <button className="btn btn-outline-blue" style={{ padding: '0.45rem 0.9rem', fontSize: '0.85rem' }} disabled>Closed</button>
+                          )}
+                        </div>
+                      </div>
+                    </SpotlightCard>
+                  );
+                });
+              })()}
             </>
           )}
         </div>
@@ -589,6 +687,11 @@ const Dashboard = () => {
               </div>
             ) : (
               <div style={{ maxHeight: '40vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem', paddingRight: '0.5rem' }}>
+                {appsError && (
+                  <div className="error-alert" role="alert" style={{ marginBottom: '0.5rem', fontSize: '0.85rem' }}>
+                    {appsError}
+                  </div>
+                )}
                 {incomingApps.map(app => (
                   <div key={app.id} className="widget-panel" style={{ padding: '1rem' }}>
                     <div className="flex-between" style={{ marginBottom: '0.5rem' }}>
@@ -631,7 +734,7 @@ const Dashboard = () => {
                   </div>
                 ))}
 
-                {incomingApps.length === 0 && (
+                {!appsError && incomingApps.length === 0 && (
                   <div className="text-muted" style={{ padding: '2rem 1rem', textAlign: 'center' }}>
                     No applications submitted for this project yet.
                   </div>

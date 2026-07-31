@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Base URL for the Django backend API
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+// Base URL for the Django backend API. Use a same-origin path so Vite can proxy it to Django during development.
+const API_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) || '/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -24,6 +24,17 @@ api.interceptors.request.use(
   }
 );
 
+export const shouldRedirectToLogin = (error, originalRequest) => {
+  if (!error?.response || error.response.status !== 401 || !originalRequest) {
+    return false;
+  }
+
+  const requestUrl = originalRequest.url || '';
+  const isAuthRequest = requestUrl.includes('/auth/login/') || requestUrl.includes('/auth/register/') || requestUrl.includes('/auth/token/refresh/');
+
+  return !isAuthRequest && !originalRequest._retry;
+};
+
 // Response Interceptor: Handle Token Refresh
 api.interceptors.response.use(
   (response) => {
@@ -32,18 +43,18 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     // If error is 401 Unauthorized and we haven't already retried
-    if (error.response && error.response.status === 401 && !originalRequest._retry) {
+    if (shouldRedirectToLogin(error, originalRequest)) {
       originalRequest._retry = true;
       try {
         const refreshToken = localStorage.getItem('refresh_token');
         if (refreshToken) {
           // Attempt to refresh the token
           const res = await axios.post(`${API_URL}/auth/token/refresh/`, { refresh: refreshToken });
-          
+
           if (res.status === 200) {
             // Save the new access token
             localStorage.setItem('access_token', res.data.access);
-            
+
             // Retry the original request with the new token
             api.defaults.headers.common['Authorization'] = `Bearer ${res.data.access}`;
             originalRequest.headers['Authorization'] = `Bearer ${res.data.access}`;

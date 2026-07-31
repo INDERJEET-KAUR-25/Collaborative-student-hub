@@ -5,6 +5,7 @@ class ProjectSerializer(serializers.ModelSerializer):
     owner_name = serializers.ReadOnlyField(source='owner.username')
     skills = serializers.SerializerMethodField()
     current_member_count = serializers.SerializerMethodField()
+    applications_count = serializers.SerializerMethodField()
     skills_list = serializers.ListField(
         child=serializers.CharField(max_length=100), write_only=True, required=False
     )
@@ -14,7 +15,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'title', 'description', 'owner', 'owner_name',
             'department', 'deadline', 'status', 'difficulty',
-            'team_size', 'current_member_count', 'created_at', 'skills', 'skills_list'
+            'team_size', 'current_member_count', 'applications_count', 'created_at', 'skills', 'skills_list'
         ]
         read_only_fields = ['owner', 'created_at']
 
@@ -29,6 +30,9 @@ class ProjectSerializer(serializers.ModelSerializer):
             return team.members.count()
         except Team.DoesNotExist:
             return 0
+
+    def get_applications_count(self, obj):
+        return obj.applications.count()
 
     def create(self, validated_data):
         skills_data = validated_data.pop('skills_list', [])

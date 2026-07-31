@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ShieldCheck, ArrowRight, AlertCircle } from 'lucide-react';
 import Squares from '../components/Squares';
@@ -7,11 +7,20 @@ import './Login.css';
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, register } = useAuth();
   
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(location.state?.signUp !== true);
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (location.state?.signUp === true) {
+      setIsLogin(false);
+    } else {
+      setIsLogin(true);
+    }
+  }, [location.state?.signUp]);
 
   const [formData, setFormData] = useState({
     username: '',

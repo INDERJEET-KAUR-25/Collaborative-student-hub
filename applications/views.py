@@ -40,7 +40,32 @@ def application_list_create(request):
                     status=status.HTTP_400_BAD_REQUEST
                 )
                 
-            serializer.save(student=request.user)
+            # Compulsory tech stack requirement check (OR condition: user needs at least one matching skill)
+            from accounts.models import Profile
+            profile, _ = Profile.objects.get_or_create(user=request.user)
+            project_skills = list(project.required_skills.values_list('skill_name', flat=True))
+            
+            if project_skills:
+                user_skills = set(profile.skills.values_list('name', flat=True))
+                user_skills_lower = {s.strip().lower() for s in user_skills}
+                project_skills_lower = {s.strip().lower() for s in project_skills}
+                
+                has_at_least_one = bool(project_skills_lower & user_skills_lower)
+                if not has_at_least_one:
+                    return Response(
+                        {'detail': f"You must have at least one of the required tech stack skills to apply: {', '.join(project_skills)}"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+            application = serializer.save(student=request.user)
+            
+            # TRIGGER NOTIFICATION TO PROJECT OWNER
+            from notifications.models import Notification
+            Notification.objects.create(
+                user=project.owner,
+                message=f"{request.user.username} has applied to join your project '{project.title}'."
+            )
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -74,6 +99,14 @@ def application_detail_update(request, pk):
         if serializer.is_valid():
             updated_app = serializer.save()
             new_status = updated_app.status
+
+            # Trigger notification to applicant when status is updated
+            if old_status != new_status:
+                from notifications.models import Notification
+                Notification.objects.create(
+                    user=updated_app.student,
+                    message=f"Your application for the project '{updated_app.project.title}' has been {new_status}."
+                )
 
             #  AUTOMATIC TEAM CREATION TRIGGER 
             if old_status != 'Accepted' and new_status == 'Accepted':

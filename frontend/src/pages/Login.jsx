@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ShieldCheck, ArrowRight, AlertCircle } from 'lucide-react';
+import Squares from '../components/Squares';
 import './Login.css';
 
 const Login = () => {
@@ -62,8 +63,15 @@ const Login = () => {
   };
 
   return (
-    <div className="login-container flex-center">
-      <div className="login-card glass-panel animate-fade-in">
+    <div className="login-container flex-center" style={{ position: 'relative', overflow: 'hidden' }}>
+      <Squares 
+        direction="right"
+        speed={0.3}
+        borderColor="rgba(99, 102, 241, 0.07)"
+        squareSize={40}
+        hoverFillColor="rgba(99, 102, 241, 0.12)"
+      />
+      <div className="login-card glass-panel animate-fade-in" style={{ zIndex: 1 }}>
         <div className="login-header flex-center">
           <div className="shield-icon">
             <ShieldCheck size={40} />

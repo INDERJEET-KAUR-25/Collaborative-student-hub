@@ -19,13 +19,12 @@ def team_detail_by_project(request, project_id):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+from django.db.models import Q
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def my_teams(request):
-    
-    #GET: List all teams the current logged-in user belongs to.
-    
-    teams = Team.objects.filter(teammember__student=request.user).distinct()
+    teams = Team.objects.filter(Q(members__student=request.user) | Q(project__owner=request.user)).distinct()
     serializer = TeamSerializer(teams, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 

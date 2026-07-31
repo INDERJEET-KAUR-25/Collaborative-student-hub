@@ -35,14 +35,27 @@ JWTRefreshView = TokenRefreshView.as_view()
 @api_view(['GET', 'PUT'])
 @permission_classes([IsAuthenticated])
 def profile_view(request):
-
-    profile, created = Profile.objects.get_or_create(user=request.user)
+    # Peer Finder passes a user_id when a visitor opens another student's
+    # profile. Without it, this remains the logged-in user's own profile.
+    target_user_id = request.query_params.get('user_id')
+    if target_user_id:
+        profile = get_object_or_404(
+            Profile.objects.select_related('user'),
+            user_id=target_user_id,
+        )
+    else:
+        profile, _ = Profile.objects.get_or_create(user=request.user)
 
     if request.method == 'GET':
         serializer = ProfileSerializer(profile)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     elif request.method == 'PUT':
+        if target_user_id:
+            return Response(
+                {'detail': 'You can only update your own profile.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         # Allow updating profile fields and optionally set skills via a list of names
         skills_list = request.data.get('skills', None)
         # Remove skills from data passed to serializer to avoid write errors
@@ -133,3 +146,37 @@ def skill_detail(request, pk):
     elif request.method == 'DELETE':
         skill.delete()
         return Response({'detail': 'Skill deleted.'}, status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def peer_review_list_create(request):
+    from .models import PeerReview
+    from .serializers import PeerReviewSerializer
+
+    if request.method == 'GET':
+        user_id = request.query_params.get('user_id')
+        if user_id:
+            reviews = PeerReview.objects.filter(reviewee_id=user_id).order_by('-created_at')
+        else:
+            reviews = PeerReview.objects.filter(reviewee=request.user).order_by('-created_at')
+        serializer = PeerReviewSerializer(reviews, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    elif request.method == 'POST':
+        reviewee_id = request.data.get('reviewee')
+        if not reviewee_id:
+            return Response({'detail': 'Reviewee is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            if int(reviewee_id) == request.user.id:
+                return Response({'detail': 'You cannot review yourself.'}, status=status.HTTP_400_BAD_REQUEST)
+        except (ValueError, TypeError):
+            return Response({'detail': 'Invalid reviewee ID.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        serializer = PeerReviewSerializer(data=request.data)
+        if serializer.is_valid():
+            if PeerReview.objects.filter(reviewer=request.user, reviewee_id=reviewee_id).exists():
+                return Response({'detail': 'You have already reviewed this peer.'}, status=status.HTTP_400_BAD_REQUEST)
+            serializer.save(reviewer=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

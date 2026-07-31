@@ -14,6 +14,7 @@ class Project(models.Model):
         ('Open','Open'),
         ('In Progress','In Progress'),
         ('Completed','Completed'),
+        ('Terminated','Terminated'),
     ]
 
     # Columns for project model

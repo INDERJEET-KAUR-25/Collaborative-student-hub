@@ -19,6 +19,7 @@ def project_list_create(request):
         department=request.query_params.get('department')
         project_status=request.query_params.get('status')
         difficulty=request.query_params.get('difficulty')
+        owner_id=request.query_params.get('owner')
         search=request.query_params.get('search')
 
         if department:
@@ -27,6 +28,8 @@ def project_list_create(request):
             projects=projects.filter(status__iexact=project_status)
         if difficulty:
             projects=projects.filter(difficulty__iexact=difficulty)
+        if owner_id:
+            projects=projects.filter(owner_id=owner_id)
         if search:
             projects = projects.filter(
                 Q(title__icontains=search) |
@@ -61,10 +64,28 @@ def project_detail(request,pk):
     elif request.method == 'PUT':
         if project.owner != request.user:
             return Response({'detail': 'You do not have permission to edit this project.'}, status=status.HTTP_403_FORBIDDEN)
-            
-        serializer = ProjectSerializer(project, data=request.data)
+        
+        old_status = project.status
+        serializer = ProjectSerializer(project, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
+            updated_project = serializer.save()
+            
+            # Notify all team members when project status changes
+            new_status = updated_project.status
+            if new_status != old_status and new_status in ('Completed', 'Terminated', 'In Progress'):
+                from notifications.models import Notification
+                from teams.models import Team
+                try:
+                    team = Team.objects.get(project=updated_project)
+                    for member in team.members.all():
+                        if member.student != request.user:
+                            Notification.objects.create(
+                                user=member.student,
+                                message=f"Project '{updated_project.title}' has been marked as '{new_status}' by the owner."
+                            )
+                except Team.DoesNotExist:
+                    pass
+            
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

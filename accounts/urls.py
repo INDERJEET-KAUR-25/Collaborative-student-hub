@@ -8,6 +8,7 @@ from .views import (
     students_list,
     skill_list_create,
     skill_detail,
+    peer_review_list_create,
 )
 
 urlpatterns = [
@@ -19,4 +20,5 @@ urlpatterns = [
     path('students/', students_list, name='students_list'),
     path('skills/', skill_list_create, name='skill_list_create'),
     path('skills/<int:pk>/', skill_detail, name='skill_detail'),
+    path('reviews/', peer_review_list_create, name='peer_review_list_create'),
 ]

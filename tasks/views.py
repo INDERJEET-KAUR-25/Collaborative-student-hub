@@ -22,7 +22,7 @@ def task_list_create(request):
         tasks = Task.objects.all().order_by('-created_at')
 
         if project_id:
-            tasks = tasks.filter(project_id=project_id)
+            tasks = tasks.filter(team__project_id=project_id)
         if assigned_me == 'true':
             tasks = tasks.filter(assigned_to=request.user)
 
@@ -39,7 +39,7 @@ def task_list_create(request):
                 from notifications.models import Notification
                 Notification.objects.create(
                     user=task.assigned_to,
-                    message=f"You have been assigned a new task: '{task.title}'"
+                    message=f"You have been assigned a new task: '{task.title}' in project '{task.team.project.title}'"
                 )
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -62,6 +62,7 @@ def task_detail(request, pk):
 
     elif request.method == 'PUT':
         old_assignee = task.assigned_to
+        old_status = task.status
         serializer = TaskSerializer(task, data=request.data, partial=True)
 
         if serializer.is_valid():
@@ -72,8 +73,18 @@ def task_detail(request, pk):
                 from notifications.models import Notification
                 Notification.objects.create(
                     user=updated_task.assigned_to,
-                    message=f"You have been assigned to the task: '{updated_task.title}'"
+                    message=f"You have been assigned to the task: '{updated_task.title}' in project '{updated_task.team.project.title}'"
                 )
+
+            # TRIGGER NOTIFICATION TO PROJECT OWNER WHEN TASK IS COMPLETED
+            if updated_task.status == 'Completed' and old_status != 'Completed':
+                from notifications.models import Notification
+                project_owner = updated_task.team.project.owner
+                if project_owner != request.user:
+                    Notification.objects.create(
+                        user=project_owner,
+                        message=f"Task '{updated_task.title}' has been marked as Completed by {request.user.username} in project '{updated_task.team.project.title}'"
+                    )
 
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

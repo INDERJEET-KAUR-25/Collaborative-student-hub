@@ -1,50 +1,50 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* Premium Dark Theme Core */
-  --bg-primary: #030712;       /* Deep obsidian black */
-  --bg-secondary: #0b0f19;     /* Sleek midnight blue */
-  --bg-card: #0d1222;          /* Rich navy-slate card */
+  /* Sneat Premium Dark Theme Core */
+  --bg-primary: #232333;       /* Sneat dark body */
+  --bg-secondary: #2b2c40;     /* Sneat dark sidebar & card background */
+  --bg-card: #2b2c40;
   
-  --text-primary: #f8fafc;     /* Ice white */
-  --text-secondary: #94a3b8;   /* Cool slate gray */
-  --text-muted: #64748b;       /* Dark slate gray */
+  --text-primary: #dbdbf0;     /* Soft white/purple text */
+  --text-secondary: #b2b2c4;   /* Muted gray-purple text */
+  --text-muted: #707185;       /* Muted text */
 
-  /* Cyber Glow Accents */
-  --accent-primary: #6366f1;   /* Electric Indigo */
-  --accent-secondary: #8b5cf6; /* Cyber Violet */
-  --accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  --accent-glow: rgba(99, 102, 241, 0.15);
+  /* Sneat Accent Brand Colors */
+  --accent-primary: #696cff;   /* Signature Sneat Purple */
+  --accent-secondary: #8592a3; /* Muted Secondary Slate */
+  --accent-gradient: linear-gradient(135deg, #696cff 0%, #7e81ff 100%);
+  --accent-glow: rgba(105, 108, 255, 0.16);
   
-  --border-color: rgba(255, 255, 255, 0.04);
-  --border-hover: rgba(99, 102, 241, 0.3);
+  --border-color: rgba(225, 222, 245, 0.08);
+  --border-hover: rgba(105, 108, 255, 0.4);
 
   /* Glassmorphism settings */
-  --glass-bg: rgba(13, 18, 34, 0.45);
+  --glass-bg: rgba(43, 44, 64, 0.65);
   --glass-border: rgba(255, 255, 255, 0.06);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --glass-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.25);
 
   /* Status Colors */
-  --status-open-bg: rgba(16, 185, 129, 0.08);
-  --status-open-text: #34d399;
-  --status-open-border: rgba(16, 185, 129, 0.2);
+  --status-open-bg: rgba(113, 221, 55, 0.08);
+  --status-open-text: #71dd37;
+  --status-open-border: rgba(113, 221, 55, 0.2);
   
-  --status-progress-bg: rgba(59, 130, 246, 0.08);
-  --status-progress-text: #60a5fa;
-  --status-progress-border: rgba(59, 130, 246, 0.2);
+  --status-progress-bg: rgba(3, 195, 236, 0.08);
+  --status-progress-text: #03c3ec;
+  --status-progress-border: rgba(3, 195, 236, 0.2);
 
-  --status-completed-bg: rgba(139, 92, 246, 0.08);
-  --status-completed-text: #a78bfa;
-  --status-completed-border: rgba(139, 92, 246, 0.2);
+  --status-completed-bg: rgba(105, 108, 255, 0.08);
+  --status-completed-text: #696cff;
+  --status-completed-border: rgba(105, 108, 255, 0.2);
 
-  --status-pending-bg: rgba(245, 158, 11, 0.08);
-  --status-pending-text: #fbbf24;
-  --status-pending-border: rgba(245, 158, 11, 0.2);
+  --status-pending-bg: rgba(255, 171, 0, 0.08);
+  --status-pending-text: #ffab00;
+  --status-pending-border: rgba(255, 171, 0, 0.2);
 
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 16px;
   --radius-full: 9999px;
   
   --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
@@ -53,26 +53,26 @@
 }
 
 body.light-mode {
-  /* Premium Light Theme Core */
-  --bg-primary: #f8fafc;
-  --bg-secondary: #ffffff;
+  /* Sneat Premium Light Theme Core */
+  --bg-primary: #f5f5f9;       /* Sneat light body */
+  --bg-secondary: #ffffff;     /* White sidebar & card background */
   --bg-card: #ffffff;
   
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
+  --text-primary: #566a7f;     /* Dark slate text */
+  --text-secondary: #a1acb8;   /* Light slate text */
+  --text-muted: #c7cfd6;       /* Very light slate */
 
-  --accent-primary: #4f46e5;
-  --accent-secondary: #7c3aed;
-  --accent-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-  --accent-glow: rgba(79, 70, 229, 0.1);
+  --accent-primary: #696cff;
+  --accent-secondary: #8592a3;
+  --accent-gradient: linear-gradient(135deg, #696cff 0%, #7e81ff 100%);
+  --accent-glow: rgba(105, 108, 255, 0.08);
 
-  --border-color: rgba(15, 23, 42, 0.06);
-  --border-hover: rgba(79, 70, 229, 0.2);
+  --border-color: rgba(67, 89, 113, 0.07);
+  --border-hover: rgba(105, 108, 255, 0.2);
 
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(15, 23, 42, 0.08);
-  --glass-shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.04);
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(67, 89, 113, 0.1);
+  --glass-shadow: 0 8px 24px 0 rgba(67, 89, 113, 0.08);
 }
 
 * {
@@ -389,7 +389,39 @@ select option {
 
 /* Base Layout Config */
 .app-container {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+/* Sneat Layout Grid System */
+.app-layout {
+  display: flex;
   min-height: 100vh;
+  width: 100%;
+  position: relative;
+}
+
+.main-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background-color: var(--bg-primary);
+  transition: padding-left var(--transition-normal);
+}
+
+@media (min-width: 993px) {
+  .main-content {
+    padding-left: 260px;
+  }
+}
+
+.content-container {
+  padding: 1.5rem;
+  flex-grow: 1;
+  max-width: 1440px;
+  width: 100%;
+  margin: 0 auto;
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

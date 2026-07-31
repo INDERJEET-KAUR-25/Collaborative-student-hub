@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { Search, Globe, Mail, AlertCircle } from 'lucide-react';
+import SpotlightCard from '../components/SpotlightCard';
 import './PeerFinder.css';
 
 const PeerFinder = () => {
@@ -33,7 +34,7 @@ const PeerFinder = () => {
   }, [searchTerm, filterDept]);
 
   return (
-    <div className="container animate-fade-in">
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       <div className="peer-header">
         <h1>Peer Finder</h1>
         <p>Discover talented students to collaborate with on your next big idea.</p>
@@ -75,7 +76,11 @@ const PeerFinder = () => {
               : 'U';
             
             return (
-              <div key={student.id} className="card peer-card" style={{ animationDelay: `${index * 0.05}s` }}>
+              <SpotlightCard 
+                key={student.id} 
+                className="card peer-card" 
+                style={{ animationDelay: `${index * 0.05}s` }}
+              >
                 <div className="peer-card-header flex-center" style={{ flexDirection: 'column', textAlign: 'center' }}>
                   <div className="peer-avatar">{initials}</div>
                   <h3 style={{ margin: '0.5rem 0 0.2rem 0' }}>
@@ -118,7 +123,7 @@ const PeerFinder = () => {
                     <button className="btn btn-outline" disabled style={{ opacity: 0.4 }}>No Portfolio</button>
                   )}
                 </div>
-              </div>
+              </SpotlightCard>
             );
           })}
 

@@ -4,6 +4,7 @@ from .models import Project, ProjectSkill
 class ProjectSerializer(serializers.ModelSerializer):
     owner_name = serializers.ReadOnlyField(source='owner.username')
     skills = serializers.SerializerMethodField()
+    current_member_count = serializers.SerializerMethodField()
     skills_list = serializers.ListField(
         child=serializers.CharField(max_length=100), write_only=True, required=False
     )
@@ -13,13 +14,21 @@ class ProjectSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'title', 'description', 'owner', 'owner_name',
             'department', 'deadline', 'status', 'difficulty',
-            'team_size', 'created_at', 'skills', 'skills_list'
+            'team_size', 'current_member_count', 'created_at', 'skills', 'skills_list'
         ]
         read_only_fields = ['owner', 'created_at']
 
     def get_skills(self, obj):
         # Returns a simple list of required skill names
         return [skill.skill_name for skill in obj.required_skills.all()]
+
+    def get_current_member_count(self, obj):
+        from teams.models import Team
+        try:
+            team = Team.objects.get(project=obj)
+            return team.members.count()
+        except Team.DoesNotExist:
+            return 0
 
     def create(self, validated_data):
         skills_data = validated_data.pop('skills_list', [])

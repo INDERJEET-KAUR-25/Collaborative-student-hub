@@ -43,6 +43,21 @@ class ProfileSerializer(serializers.ModelSerializer):
         model = Profile
         fields = (
             'id', 'user', 'department', 'year', 'bio', 'github',
-            'linkedin', 'availability', 'interests', 'resume', 'created_at'
+            'linkedin', 'availability', 'interests', 'resume', 'created_at', 'skills'
         )
         read_only_fields = ('id', 'user', 'created_at')
+
+
+from .models import PeerReview
+
+class PeerReviewSerializer(serializers.ModelSerializer):
+    reviewer_name = serializers.ReadOnlyField(source='reviewer.username')
+    reviewee_name = serializers.ReadOnlyField(source='reviewee.username')
+
+    class Meta:
+        model = PeerReview
+        fields = [
+            'id', 'reviewer', 'reviewer_name', 'reviewee', 'reviewee_name',
+            'rating', 'comment', 'created_at'
+        ]
+        read_only_fields = ['id', 'reviewer', 'created_at']

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import { Globe, Edit3, Save, X, Calendar, AlertCircle } from 'lucide-react';
+import { Globe, Edit3, Save, X, Calendar, AlertCircle, Star } from 'lucide-react';
 import './Profile.css';
 
 const Profile = () => {
@@ -13,6 +13,7 @@ const Profile = () => {
   const [profileData, setProfileData] = useState(null);
   const [joinedTeams, setJoinedTeams] = useState([]);
   const [createdProjects, setCreatedProjects] = useState([]);
+  const [reviews, setReviews] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
@@ -71,10 +72,22 @@ const Profile = () => {
     }
   };
 
+  const fetchReviews = async () => {
+    try {
+      const targetId = profileUserId || (user && user.user?.id);
+      if (targetId) {
+        const res = await api.get('/api/auth/reviews/', { params: { user_id: targetId } });
+        setReviews(res.data);
+      }
+    } catch (err) {
+      console.error('Error fetching received reviews:', err);
+    }
+  };
+
   useEffect(() => {
     const initData = async () => {
       setLoading(true);
-      await Promise.all([fetchProfile(), fetchJoinedTeams(), fetchCreatedProjects()]);
+      await Promise.all([fetchProfile(), fetchJoinedTeams(), fetchCreatedProjects(), fetchReviews()]);
       setLoading(false);
     };
     initData();
@@ -375,6 +388,38 @@ const Profile = () => {
                   {joinedTeams.length === 0 && (
                     <div className="card text-muted flex-center" style={{ height: '100px', flexDirection: 'column', justifyContent: 'center' }}>
                       <p>{isOwnProfile ? "You haven't joined any projects yet." : "This student hasn't joined any projects yet."}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <h2>Peer Endorsements</h2>
+                <div className="user-projects" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
+                  {reviews.map(rev => (
+                    <div key={rev.id} className="card project-card" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'stretch' }}>
+                      <div className="flex-between">
+                        <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Reviewed by: {rev.reviewer_name}</span>
+                        <div style={{ display: 'flex', gap: '0.1rem' }}>
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star 
+                              key={star} 
+                              size={12} 
+                              fill={rev.rating >= star ? 'var(--accent-secondary)' : 'none'} 
+                              color={rev.rating >= star ? 'var(--accent-secondary)' : 'var(--text-muted)'} 
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontStyle: 'italic', margin: 0 }}>
+                        "{rev.comment}"
+                      </p>
+                    </div>
+                  ))}
+
+                  {reviews.length === 0 && (
+                    <div className="card text-muted flex-center" style={{ height: '100px', flexDirection: 'column', justifyContent: 'center' }}>
+                      <p>No peer reviews received yet.</p>
                     </div>
                   )}
                 </div>

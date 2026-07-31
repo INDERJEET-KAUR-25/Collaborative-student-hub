@@ -1,0 +1,34 @@
+.peer-reviews-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.reviews-layout-grid {
+  display: grid;
+  grid-template-columns: 5fr 7fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 992px) {
+  .reviews-layout-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.star-rating-selector .star-btn:hover svg {
+  transform: scale(1.15);
+}
+
+.review-history-card {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  transition: transform var(--transition-fast);
+}
+
+.review-history-card:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent-primary);
+}

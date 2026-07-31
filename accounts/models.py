@@ -25,3 +25,17 @@ class Skill(models.Model):
     def __str__(self):
         return self.name
 
+
+class PeerReview(models.Model):
+    reviewer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reviews_written')
+    reviewee = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reviews_received')
+    rating = models.PositiveIntegerField(default=5)  # 1 to 5 stars
+    comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('reviewer', 'reviewee')
+
+    def __str__(self):
+        return f"Review by {self.reviewer.username} for {self.reviewee.username}: {self.rating} stars"
+

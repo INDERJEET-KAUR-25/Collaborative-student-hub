@@ -73,4 +73,4 @@ def project_detail(request,pk):
             return Response({'detail': 'You do not have permission to delete this project.'}, status=status.HTTP_403_FORBIDDEN)
             
         project.delete()
-        return Response({'detail': 'Project deleted successfully.'}, status=status.HTTP_24_NO_CONTENT)
+        return Response({"detail": "Project deleted successfully."}, status=status.HTTP_24_NO_CONTENT)
